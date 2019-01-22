@@ -7,7 +7,15 @@ using UnityEngine.UI;
 public class Player : MonoBehaviour {
 
 	public float speed = 2;
+	[Header("Run & stamina")]
+	public float runSpeedModifier = 2;
+	public float maxStamina = 2;
+	public float staminaRegeneraton = 1;
+	public float runDelay = 0.5f;
+	private float currRunDelay = 0;
+	private float currStamina;
 
+	[Header("HP")]
 	public int maxHp = 10;
 	public int hp { get; private set; }
 
@@ -29,6 +37,7 @@ public class Player : MonoBehaviour {
 		hp = maxHp;
 
 		hpSlider.value = hp;
+		currStamina = maxStamina;
 	}
 	
 	public void Hit(int dmg){
@@ -100,8 +109,25 @@ public class Player : MonoBehaviour {
 		//wektor ma długośc 1
 		vel.Normalize();
 
+
+
 		//vel = vel * speed;
 		vel *= speed;
+
+		if(currRunDelay<=0 && Input.GetAxisRaw("Run")!=0){
+			vel *= runSpeedModifier;
+			currStamina -= Time.deltaTime;
+			if(currStamina<=0){
+				currRunDelay = runDelay;
+			}
+		}else {
+			currRunDelay -= Time.deltaTime;
+			currStamina += staminaRegeneraton * Time.deltaTime;
+			if(currStamina>maxStamina){
+				currStamina = maxStamina;	
+			}
+		}
+		
 
 		rb.velocity  = vel;
 
