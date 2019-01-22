@@ -15,6 +15,11 @@ public class Enemy : MonoBehaviour {
 	
 	public int hp = 4;
 
+	[Header("Random move")]
+	public float moveMaxDistance = 5;
+	public float moveDelay = 2;
+	private float currMoveDelay;
+	private Vector2 targetPosition;
 
 	private float currAttackTime = 0;
 	private Rigidbody2D rb;
@@ -32,17 +37,30 @@ public class Enemy : MonoBehaviour {
 	void Start () {
 		rb = GetComponent<Rigidbody2D>();
 		player = GameObject.FindObjectOfType<Player>();
+		targetPosition = transform.position;
+		currMoveDelay = Random.Range(-5, moveDelay);
 	}
 	
 	void FixedUpdate () {
 		float distance = Vector2.Distance(toVec2(transform), toVec2(player.transform));
 		if(distance < viewDistance){
-			Vector3 diff = player.transform.position - transform.position;
-			float angle = Mathf.Atan2(diff.x, diff.y) * Mathf.Rad2Deg;
-			angle -= 90;
-			transform.rotation = Quaternion.AngleAxis(-angle, Vector3.forward);
 
-			rb.velocity = transform.right * speed;
+			MoveToPosition(player.transform.position);
+			currMoveDelay = 0;
+
+		}else if(currMoveDelay > moveDelay ) {
+			
+			
+			MoveToPosition(targetPosition);
+
+			if( Vector2.Distance(toVec2(transform), targetPosition) < 0.1 ){
+				currMoveDelay = 0;
+				targetPosition = Utils.RandomVec3(-moveMaxDistance, moveMaxDistance);
+				targetPosition += (Vector2)transform.position;
+			}
+			
+		}else {
+			currMoveDelay += Time.deltaTime;
 		}
 
 		currAttackTime += Time.deltaTime;
@@ -50,6 +68,18 @@ public class Enemy : MonoBehaviour {
 			player.Hit(dmg);
 			currAttackTime = 0;
 		}
+	}
+
+	void MoveToPosition(Vector2 target){
+		LookAt(target);
+		rb.velocity = transform.right * speed;
+	}
+
+	void LookAt(Vector3 target){
+		Vector3 diff = target - transform.position;
+		float angle = Mathf.Atan2(diff.x, diff.y) * Mathf.Rad2Deg;
+		angle -= 90;
+		transform.rotation = Quaternion.AngleAxis(-angle, Vector3.forward);
 	}
 
 	Vector2 toVec2(Transform t){
@@ -61,5 +91,10 @@ public class Enemy : MonoBehaviour {
 		Gizmos.DrawWireSphere(transform.position, viewDistance);
 		Gizmos.color = new Color(1f, 0,0, 0.25f);
 		Gizmos.DrawSphere(transform.position, attackRange);
+		// if(currMoveDelay>=moveDelay)
+		// 	Gizmos.color = Color.green;
+		// else 
+		// 	Gizmos.color = Color.red;
+		// Gizmos.DrawRay(transform.position, targetPosition);
 	}
 }
